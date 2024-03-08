@@ -1,53 +1,30 @@
 #!/usr/bin/python3
+"""
+Fabric script based on the file 1-pack_web_static.py that distributes an
+archive to the web servers
+"""
 
-""" Deploys a web static to servers based on some weird shit """
-
-import os
-from fabric.api import env, local, put, run
-
-
-env.user = 'ubuntu'
+from fabric.api import put, run, env
+from os.path import exists
 env.hosts = ['52.87.212.24', '54.209.128.7']
 
 
-def do_pack():
-    """ A function to pack the current webstatic version """
-
-    local('mkdir -p versions')
-
-    current = datetime.now()
-    filename = "versions/web_static_{}{}{}{}{}{}.tgz".format(
-        current.year, current.month, current.day,
-        current.hour, current.minute, current.second)
-
-    path = local('tar -cvzf {} web_static'.format(filename))
-    if path.succeeded:
-        print("Packed webstatic to {}".format(filename))
-        return filename
-    else:
-        return None
-
-
 def do_deploy(archive_path):
-    """ Deploys a webstatic to a webserver """
-
-    if not os.path.isfile(archive_path):
+    """distributes an archive to the web servers"""
+    if exists(archive_path) is False:
         return False
-
-    packname = archive_path.split("versions/")[-1]
-    temppath = "/tmp/{}".format(packname)
-    comppath = "/data/web_static/releases/{}/".format(packname[:-4])
-
-    put(archive_path, temppath)
-    run('mkdir -p {}'.format(comppath))
-    comp = run('tar -xzf {} -C {}'.format(temppath, comppath))
-    if comp.failed:
+    try:
+        file_n = archive_path.split("/")[-1]
+        no_ext = file_n.split(".")[0]
+        path = "/data/web_static/releases/"
+        put(archive_path, '/tmp/')
+        run('mkdir -p {}{}/'.format(path, no_ext))
+        run('tar -xzf /tmp/{} -C {}{}/'.format(file_n, path, no_ext))
+        run('rm /tmp/{}'.format(file_n))
+        run('mv {0}{1}/web_static/* {0}{1}/'.format(path, no_ext))
+        run('rm -rf {}{}/web_static'.format(path, no_ext))
+        run('rm -rf /data/web_static/current')
+        run('ln -s {}{}/ /data/web_static/current'.format(path, no_ext))
+        return True
+    except:
         return False
-    run('rm {}'.format(temppath))
-    run('mv {}/web_static/* {}'.format(comppath, comppath))
-    run('rm -rf {}/web_static/'.format(comppath))
-    run('rm -rf /data/web_static/current')
-    run('ln -sf {} /data/web_static/current'.format(comppath))
-    print("New version deployed!")
-
-    return True
