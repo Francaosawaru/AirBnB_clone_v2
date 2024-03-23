@@ -1,39 +1,40 @@
 #!/usr/bin/python3
-
-""" State Module for HBNB project """
-
-import os
+"""Defines the State class."""
+import models
+from sqlalchemy import Column, String
+from sqlalchemy.orm import relationship
 from models.base_model import BaseModel, Base
 from models.city import City
-from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.orm import relationship
+from os import getenv
 
 
 class State(BaseModel, Base):
-    """ State class """
+    """Represents a state for a MySQL database.
 
-    if os.getenv('HBNB_TYPE_STORAGE') == 'db':
-        from models.city import City
+    Inherits from SQLAlchemy Base and links to the MySQL table states.
 
-        __tablename__ = "states"
-        name = Column(String(128), nullable=False)
-        cities = relationship(
-                "City",
-                cascade="all, delete, delete-orphan",
-                backref="state")
+    Attributes:
+        __tablename__ (str): The name of the MySQL table to store States.
+        name (sqlalchemy String): The name of the State.
+        cities (sqlalchemy relationship): The State-City relationship.
+    """
+    __tablename__ = "states"
+    name = Column(String(128), nullable=False)
 
+    if getenv("HBNB_TYPE_STORAGE") == "db":
+        cities = relationship("City", backref="state", cascade="all, delete")
     else:
-        name = ""
         @property
         def cities(self):
-            """ returns all cities with state_id == State.id """
+            """Get a list of City instances with
+                state_id equals to the current State.id.
 
-            import models
+            This is a getter attribute for FileStorage
+                relationship between State and City.
+            """
+            city_list = []
+            for city in models.storage.all(City).values():
+                if city.state_id == self.id:
+                    city_list.append(city)
+            return city_list
 
-            list_cities = []
-            for key, obj in models.storage.all().items():
-                if "City" in key:
-                    if obj.state_id == self.id:
-                        list_cities += [obj]
-
-            return list_cities
