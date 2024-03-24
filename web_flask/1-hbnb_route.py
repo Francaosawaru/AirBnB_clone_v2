@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """
     This module starts a simple flask application
+    and sets the / route and /hbnb route
 """
 
 from flask import Flask
@@ -10,8 +11,13 @@ app = Flask(__name__)
 
 
 @app.route('/', strict_slashes=False)
-def web_flask():
+def web_root():
     return 'Hello HBNB!'
+
+
+@app.route('/hbnb', strict_slashes=False)
+def hbnb_route():
+    return 'HBNB'
 
 
 if __name__ == '__main__':
