@@ -1,26 +1,35 @@
 #!/usr/bin/python3
 """
-starts a Flask web application
+    This module starts a simple flask application and sets the
+    /states_list route to display a list of all states in the db
 """
 
 from flask import Flask, render_template
-from models import *
 from models import storage
+from models.state import State
+from models.city import City
+
+
 app = Flask(__name__)
 
 
-@app.route('/cities_by_states', strict_slashes=False)
-def cities_by_states():
-    """display the states and cities listed in alphabetical order"""
-    states = storage.all("State").values()
-    return render_template('8-cities_by_states.html', states=states)
-
-
 @app.teardown_appcontext
-def teardown_db(exception):
-    """closes the storage on teardown"""
+def teardown_session(exception):
+    """ Closes the storage session """
+
     storage.close()
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port='5000')
 
+@app.route('/cities_by_states', strict_slashes=False)
+def city_states_route():
+    """
+        States and city list of all dump, all_states is a
+        dictionary containing all state objects
+    """
+
+    states_dict = storage.all(State)
+    return render_template('8-cities_by_states.html', all_states=states_dict)
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
