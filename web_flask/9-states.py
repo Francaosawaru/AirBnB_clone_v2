@@ -1,33 +1,28 @@
 #!/usr/bin/python3
-""" a script that starts a Flask web application """
-from flask import Flask
-from flask import render_template
-from models import storage, State
+"""
+start Flask application
+"""
 
+from flask import Flask, render_template
+from models import *
+from models import storage
 app = Flask(__name__)
 
 
+@app.route('/states', strict_slashes=False)
+@app.route('/states/<state_id>', strict_slashes=False)
+def states(state_id=None):
+    """display the states and cities listed in alphabetical order"""
+    states = storage.all("State")
+    if state_id is not None:
+        state_id = 'State.' + state_id
+    return render_template('9-states.html', states=states, state_id=state_id)
+
+
 @app.teardown_appcontext
-def remove_session(exception):
-    """ After each request, it removes the current SQLAlchemy Session """
+def teardown_db(exception):
+    """closes the storage on teardown"""
     storage.close()
 
-
-@app.route('/states', strict_slashes=False)
-def render_states():
-    """ displays all states """
-    States = storage.all(State).values()
-    return render_template("9-states.html", States=States, one=None)
-
-
-@app.route('/states/<string:id>', strict_slashes=False)
-def render_one_state(id):
-    """ displays one state if it exists """
-    key = "State." + id
-    one = None
-    if key in storage.all(State):
-        one = storage.all(State)[key]
-    return render_template("9-states.html", States=None, one=one)
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port='5000')
